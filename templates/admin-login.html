@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login – SoftSkills Engineering</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-container" style="max-width:380px;">
+      <div class="logo-section">
+        <img src="images/logo.png" alt="SoftSkills" onerror="this.style.display='none'">
+        <h1>SOFTSKILLS</h1>
+        <p>ENGINEERING</p>
+        <div style="margin-top:12px;">
+          <span class="admin-panel-badge">🔐 ADMIN PANEL</span>
+        </div>
+      </div>
+
+      <div id="alertBox" class="alert"></div>
+
+      <form onsubmit="handleAdminLogin(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="adminUser" placeholder="admin" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="adminPass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-primary" id="loginBtn">
+          🔐 Login to Admin Panel
+        </button>
+      </form>
+
+      <p style="text-align:center; margin-top:20px; font-size:12px; color:rgba(255,255,255,0.4);">
+        <a href="index.html" style="color:rgba(255,255,255,0.5); text-decoration:none;">← Student Portal</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Redirect if already logged in as admin
+    if (localStorage.getItem('ss_admin_token')) window.location.href = 'admin.html';
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const alert = document.getElementById('alertBox');
+      btn.textContent = 'Logging in...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('adminUser').value,
+            password: document.getElementById('adminPass').value
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert.className = 'alert show alert-error';
+          alert.textContent = data.error;
+          return;
+        }
+
+        localStorage.setItem('ss_admin_token', data.token);
+        localStorage.setItem('ss_admin', JSON.stringify(data.admin));
+        alert.className = 'alert show alert-success';
+        alert.textContent = '✅ Login successful!';
+        setTimeout(() => window.location.href = 'admin.html', 700);
+      } catch (err) {
+        alert.className = 'alert show alert-error';
+        alert.textContent = 'Connection error. Make sure server is running.';
+      } finally {
+        btn.textContent = '🔐 Login to Admin Panel';
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
