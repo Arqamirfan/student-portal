@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – SoftSkills Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="portal-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <h2>∞ SOFTSKILLS</h2>
+        <span>ENGINEERING</span>
+      </div>
+
+      <div class="student-info-sidebar">
+        <div class="student-avatar" id="sidebarAvatar">S</div>
+        <div class="student-name" id="sidebarName">Loading...</div>
+        <div class="student-id-badge" id="sidebarId">SS-0000</div>
+        <div class="status-badge status-enrolled" id="sidebarStatus">Enrolled</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active">
+          <span class="icon">🏠</span> Dashboard
+        </a>
+        <a href="attendance.html" class="nav-item">
+          <span class="icon">📅</span> Attendance & Leave
+        </a>
+        <a href="quiz.html" class="nav-item">
+          <span class="icon">📝</span> Quiz Results
+        </a>
+        <a href="assignments.html" class="nav-item">
+          <span class="icon">📚</span> Assignments
+        </a>
+        <a href="fees.html" class="nav-item">
+          <span class="icon">💰</span> Fee Management
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%" onclick="logout()">
+          🚪 Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Welcome back, <span id="welcomeName">Student</span> 👋</h1>
+        <p id="courseDisplay">Loading your information...</p>
+      </div>
+
+      <!-- STUDENT STATUS CARD -->
+      <div class="card" id="statusCard" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border-color: #e63946;">
+        <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px;">
+            <p style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Student ID</p>
+            <h2 id="profileStudentId" style="color:var(--primary); font-size:22px; margin:5px 0;">Loading...</h2>
+            <span class="status-badge status-enrolled" id="profileStatus" style="display:inline-block; width:auto;">Enrolled</span>
+          </div>
+          <div style="flex:1; min-width:150px;">
+            <p style="font-size:12px; color:var(--text-muted);">Course</p>
+            <p id="profileCourse" style="font-weight:600; margin-top:5px;">—</p>
+            <p id="profileCategory" style="font-size:12px; color:var(--text-muted);">—</p>
+          </div>
+          <div style="flex:1; min-width:150px;">
+            <p style="font-size:12px; color:var(--text-muted);">Enrolled Since</p>
+            <p id="profileEnrolled" style="font-weight:600; margin-top:5px;">—</p>
+            <p style="font-size:12px; color:var(--text-muted);" id="profileDuration">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📅</div>
+          <div class="stat-info">
+            <h4 id="statAttendance">—%</h4>
+            <p>Attendance Rate</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">📝</div>
+          <div class="stat-info">
+            <h4 id="statQuiz">—%</h4>
+            <p>Quiz Average</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">📚</div>
+          <div class="stat-info">
+            <h4 id="statAssignments">—</h4>
+            <p>Assignments Done</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">💰</div>
+          <div class="stat-info">
+            <h4 id="statFees">—</h4>
+            <p>Fee Status</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div class="card">
+        <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:15px;">
+          <a href="attendance.html" style="text-decoration:none;">
+            <div class="stat-card" style="flex-direction:column; text-align:center; cursor:pointer;">
+              <div style="font-size:30px; margin-bottom:10px;">📅</div>
+              <p style="font-size:13px; font-weight:600;">View Attendance</p>
+            </div>
+          </a>
+          <a href="attendance.html#leave" style="text-decoration:none;">
+            <div class="stat-card" style="flex-direction:column; text-align:center; cursor:pointer;">
+              <div style="font-size:30px; margin-bottom:10px;">✈️</div>
+              <p style="font-size:13px; font-weight:600;">Apply for Leave</p>
+            </div>
+          </a>
+          <a href="quiz.html" style="text-decoration:none;">
+            <div class="stat-card" style="flex-direction:column; text-align:center; cursor:pointer;">
+              <div style="font-size:30px; margin-bottom:10px;">📝</div>
+              <p style="font-size:13px; font-weight:600;">Quiz Results</p>
+            </div>
+          </a>
+          <a href="assignments.html" style="text-decoration:none;">
+            <div class="stat-card" style="flex-direction:column; text-align:center; cursor:pointer;">
+              <div style="font-size:30px; margin-bottom:10px;">📚</div>
+              <p style="font-size:13px; font-weight:600;">Submit Assignment</p>
+            </div>
+          </a>
+          <a href="fees.html" style="text-decoration:none;">
+            <div class="stat-card" style="flex-direction:column; text-align:center; cursor:pointer;">
+              <div style="font-size:30px; margin-bottom:10px;">💳</div>
+              <p style="font-size:13px; font-weight:600;">Pay Fees</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="card">
+        <div class="card-header"><h3>🔔 Notifications</h3></div>
+        <div id="notifList">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const student = getStudent();
+
+    // Populate sidebar and profile
+    document.getElementById('sidebarAvatar').textContent = student.name?.charAt(0).toUpperCase() || 'S';
+    document.getElementById('sidebarName').textContent = student.name;
+    document.getElementById('sidebarId').textContent = student.student_id;
+    document.getElementById('welcomeName').textContent = student.name?.split(' ')[0];
+    document.getElementById('courseDisplay').textContent = student.course_name
+      ? `${student.course_name} • ${student.category}`
+      : 'No course assigned';
+
+    // Status
+    const statusEl = document.getElementById('sidebarStatus');
+    statusEl.textContent = capitalize(student.status || 'enrolled');
+    statusEl.className = `status-badge status-${student.status || 'enrolled'}`;
+
+    document.getElementById('profileStudentId').textContent = student.student_id;
+    document.getElementById('profileCourse').textContent = student.course_name || '—';
+    document.getElementById('profileCategory').textContent = student.category || '—';
+    document.getElementById('profileEnrolled').textContent = student.enrollment_date || '—';
+    document.getElementById('profileDuration').textContent = student.duration_months
+      ? `${student.duration_months} months course`
+      : '—';
+
+    const profileStatus = document.getElementById('profileStatus');
+    profileStatus.textContent = capitalize(student.status || 'enrolled');
+    profileStatus.className = `status-badge status-${student.status || 'enrolled'}`;
+
+    // Load stats
+    async function loadDashboardStats() {
+      try {
+        const token = getToken();
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        const [attRes, quizRes, asgRes, feeRes, notifRes] = await Promise.all([
+          fetch('/api/attendance', { headers }),
+          fetch('/api/quiz', { headers }),
+          fetch('/api/assignments', { headers }),
+          fetch('/api/fees', { headers }),
+          fetch('/api/notifications', { headers })
+        ]);
+
+        const att = await attRes.json();
+        const quiz = await quizRes.json();
+        const asg = await asgRes.json();
+        const fee = await feeRes.json();
+        const notif = await notifRes.json();
+
+        if (att.success) {
+          document.getElementById('statAttendance').textContent = `${att.summary.percentage}%`;
+        }
+
+        if (quiz.success) {
+          document.getElementById('statQuiz').textContent = `${quiz.stats.average}%`;
+        }
+
+        if (asg.success) {
+          document.getElementById('statAssignments').textContent =
+            `${asg.stats.submitted}/${asg.stats.total}`;
+        }
+
+        if (fee.success) {
+          const unpaid = fee.summary.overdue;
+          document.getElementById('statFees').textContent = unpaid > 0
+            ? `${unpaid} Overdue`
+            : 'Clear ✓';
+          if (unpaid > 0) {
+            document.getElementById('statsGrid').querySelector('.stat-icon.red').closest('.stat-card')
+              .style.borderColor = 'var(--danger)';
+          }
+        }
+
+        // Notifications
+        if (notif.success) {
+          const container = document.getElementById('notifList');
+          if (notif.notifications.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><p>No notifications</p></div>';
+          } else {
+            container.innerHTML = notif.notifications.map(n => `
+              <div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; gap:12px;">
+                <div style="font-size:20px;">📢</div>
+                <div>
+                  <p style="font-size:13px; font-weight:600; margin-bottom:4px;">${n.title}</p>
+                  <p style="font-size:12px; color:var(--text-muted);">${n.message}</p>
+                  <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">${new Date(n.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+
+    loadDashboardStats();
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  </script>
+</body>
+</html>
