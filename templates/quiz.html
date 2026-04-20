@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Results – SoftSkills Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+
+  <div class="portal-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo"><h2>∞ SOFTSKILLS</h2><span>ENGINEERING</span></div>
+      <div class="student-info-sidebar">
+        <div class="student-avatar" id="sidebarAvatar">S</div>
+        <div class="student-name" id="sidebarName">—</div>
+        <div class="student-id-badge" id="sidebarId">—</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+        <a href="attendance.html" class="nav-item"><span class="icon">📅</span> Attendance & Leave</a>
+        <a href="quiz.html" class="nav-item active"><span class="icon">📝</span> Quiz Results</a>
+        <a href="assignments.html" class="nav-item"><span class="icon">📚</span> Assignments</a>
+        <a href="fees.html" class="nav-item"><span class="icon">💰</span> Fee Management</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>📝 Quiz Results</h1>
+        <p>View your quiz performance and grades</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info"><h4 id="totalQuizzes">0</h4><p>Total Quizzes</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info"><h4 id="attemptedQuizzes">0</h4><p>Attempted</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">📊</div>
+          <div class="stat-info"><h4 id="quizAverage">0%</h4><p>Average Score</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🏆</div>
+          <div class="stat-info"><h4 id="bestGrade">—</h4><p>Best Grade</p></div>
+        </div>
+      </div>
+
+      <!-- QUIZZES LIST -->
+      <div class="card">
+        <div class="card-header"><h3>All Quizzes</h3></div>
+        <div id="quizList">
+          <div class="loading"><div class="spinner"></div> Loading quizzes...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SUBMIT QUIZ MODAL -->
+  <div class="modal-overlay" id="quizModal">
+    <div class="modal">
+      <h3 id="quizModalTitle">Submit Quiz Result</h3>
+      <div id="quizAlert" class="alert"></div>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
+        Total Marks: <strong id="quizTotalMarks">100</strong>
+      </p>
+      <div class="form-group">
+        <label>Marks Obtained</label>
+        <input type="number" id="quizMarks" placeholder="Enter your marks" min="0">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('quizModal').classList.remove('show')">Cancel</button>
+        <button class="btn-primary" style="width:auto; padding:10px 24px;" onclick="submitQuiz()">Submit Result</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const student = getStudent();
+    document.getElementById('sidebarAvatar').textContent = student.name?.charAt(0) || 'S';
+    document.getElementById('sidebarName').textContent = student.name;
+    document.getElementById('sidebarId').textContent = student.student_id;
+
+    let activeQuizId = null;
+    let activeQuizTotal = 100;
+
+    async function loadQuizzes() {
+      try {
+        const res = await apiRequest('/api/quiz');
+        const data = await res.json();
+
+        document.getElementById('totalQuizzes').textContent = data.stats.total;
+        document.getElementById('attemptedQuizzes').textContent = data.stats.attempted;
+        document.getElementById('quizAverage').textContent = `${data.stats.average}%`;
+
+        const attempted = data.quizzes.filter(q => q.attempted && q.grade);
+        const gradeOrder = ['A+', 'A', 'B', 'C', 'D', 'F'];
+        const best = attempted.sort((a, b) => gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade))[0];
+        document.getElementById('bestGrade').textContent = best?.grade || '—';
+
+        const container = document.getElementById('quizList');
+
+        if (data.quizzes.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>No quizzes available yet</p></div>';
+          return;
+        }
+
+        container.innerHTML = data.quizzes.map(q => {
+          const pct = q.attempted && q.obtained_marks !== null
+            ? Math.round((q.obtained_marks / q.total_marks) * 100)
+            : null;
+
+          const gradeClass = q.grade
+            ? `grade-${q.grade.toLowerCase().replace('+', '-plus')}`
+            : '';
+
+          return `
+            <div style="padding:20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:200px;">
+                <h4 style="font-size:15px; font-weight:600; margin-bottom:5px;">${q.title}</h4>
+                <p style="font-size:12px; color:var(--text-muted);">
+                  Total Marks: ${q.total_marks}
+                  ${q.quiz_date ? ' • ' + formatDate(q.quiz_date) : ''}
+                </p>
+              </div>
+              ${q.attempted ? `
+                <div style="text-align:center; min-width:80px;">
+                  <p class="${gradeClass}" style="font-size:28px; font-weight:800;">${q.grade || '—'}</p>
+                  <p style="font-size:12px; color:var(--text-muted);">${q.obtained_marks}/${q.total_marks}</p>
+                </div>
+                <div style="min-width:120px;">
+                  <div class="progress-bar-container">
+                    <div class="progress-bar" style="width:${pct}%; background:${
+                      pct >= 80 ? 'linear-gradient(90deg,#2ecc71,#27ae60)'
+                      : pct >= 60 ? 'linear-gradient(90deg,#f39c12,#e67e22)'
+                      : 'linear-gradient(90deg,#e74c3c,#c0392b)'
+                    }"></div>
+                  </div>
+                  <p style="font-size:11px; color:var(--text-muted); text-align:center; margin-top:5px;">${pct}%</p>
+                </div>
+                <span class="badge badge-success">Submitted</span>
+              ` : `
+                <span class="badge badge-warning">Pending</span>
+                <button class="btn-primary" style="width:auto; padding:8px 16px;" 
+                  onclick="openQuizModal(${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.total_marks})">
+                  Enter Result
+                </button>
+              `}
+            </div>
+          `;
+        }).join('');
+
+      } catch (e) {
+        console.error(e);
+        document.getElementById('quizList').innerHTML =
+          '<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load quizzes</p></div>';
+      }
+    }
+
+    function openQuizModal(id, title, totalMarks) {
+      activeQuizId = id;
+      activeQuizTotal = totalMarks;
+      document.getElementById('quizModalTitle').textContent = `Submit: ${title}`;
+      document.getElementById('quizTotalMarks').textContent = totalMarks;
+      document.getElementById('quizMarks').max = totalMarks;
+      document.getElementById('quizMarks').value = '';
+      document.getElementById('quizAlert').classList.remove('show');
+      document.getElementById('quizModal').classList.add('show');
+    }
+
+    async function submitQuiz() {
+      const marks = parseInt(document.getElementById('quizMarks').value);
+      const alertEl = document.getElementById('quizAlert');
+
+      if (isNaN(marks) || marks < 0 || marks > activeQuizTotal) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = `Marks must be between 0 and ${activeQuizTotal}`;
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/quiz/${activeQuizId}/submit`, {
+          method: 'POST',
+          body: JSON.stringify({ obtained_marks: marks })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alertEl.className = 'alert show alert-success';
+          alertEl.textContent = `✅ Submitted! Grade: ${data.grade} (${data.percentage}%)`;
+          setTimeout(() => {
+            document.getElementById('quizModal').classList.remove('show');
+            loadQuizzes();
+          }, 1500);
+        } else {
+          alertEl.className = 'alert show alert-error';
+          alertEl.textContent = data.error;
+        }
+      } catch (e) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Submission failed.';
+      }
+    }
+
+    loadQuizzes();
+  </script>
+</body>
+</html>
