@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance – SoftSkills Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="portal-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo"><h2>∞ SOFTSKILLS</h2><span>ENGINEERING</span></div>
+      <div class="student-info-sidebar">
+        <div class="student-avatar" id="sidebarAvatar">S</div>
+        <div class="student-name" id="sidebarName">—</div>
+        <div class="student-id-badge" id="sidebarId">—</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+        <a href="attendance.html" class="nav-item active"><span class="icon">📅</span> Attendance & Leave</a>
+        <a href="quiz.html" class="nav-item"><span class="icon">📝</span> Quiz Results</a>
+        <a href="assignments.html" class="nav-item"><span class="icon">📚</span> Assignments</a>
+        <a href="fees.html" class="nav-item"><span class="icon">💰</span> Fee Management</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>📅 Attendance & Leave</h1>
+        <p>Track your daily attendance and manage leave applications</p>
+      </div>
+
+      <!-- SUMMARY STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info"><h4 id="presentCount">0</h4><p>Days Present</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">❌</div>
+          <div class="stat-info"><h4 id="absentCount">0</h4><p>Days Absent</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">✈️</div>
+          <div class="stat-info"><h4 id="leaveCount">0</h4><p>Leave Days</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📊</div>
+          <div class="stat-info"><h4 id="attendancePct">0%</h4><p>Attendance %</p></div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE PROGRESS -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Attendance Progress</h3>
+          <select id="monthFilter" onchange="loadAttendance()" style="background:var(--bg-dark); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px;">
+          </select>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom:10px;">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <p id="progressText" style="font-size:12px; color:var(--text-muted); text-align:center;">Loading...</p>
+      </div>
+
+      <!-- ATTENDANCE RECORDS TABLE -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Daily Attendance Records</h3>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTable">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div> Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LEAVE APPLICATION -->
+      <div class="card" id="leave">
+        <div class="card-header">
+          <h3>✈️ Apply for Leave</h3>
+          <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="document.getElementById('leaveModal').classList.add('show')">
+            + New Application
+          </button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>From Date</th>
+                <th>To Date</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Applied On</th>
+              </tr>
+            </thead>
+            <tbody id="leaveTable">
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div> Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- LEAVE MODAL -->
+  <div class="modal-overlay" id="leaveModal">
+    <div class="modal">
+      <h3>✈️ Leave Application</h3>
+      <div id="leaveAlert" class="alert"></div>
+      <div class="form-group">
+        <label>From Date</label>
+        <input type="date" id="leaveFrom" required>
+      </div>
+      <div class="form-group">
+        <label>To Date</label>
+        <input type="date" id="leaveTo" required>
+      </div>
+      <div class="form-group">
+        <label>Reason for Leave</label>
+        <textarea id="leaveReason" rows="4" placeholder="Describe your reason..." required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('leaveModal').classList.remove('show')">Cancel</button>
+        <button class="btn-primary" style="width:auto; padding:10px 24px;" onclick="submitLeave()">Submit Application</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const student = getStudent();
+    document.getElementById('sidebarAvatar').textContent = student.name?.charAt(0) || 'S';
+    document.getElementById('sidebarName').textContent = student.name;
+    document.getElementById('sidebarId').textContent = student.student_id;
+
+    // Populate month filter
+    const monthFilter = document.getElementById('monthFilter');
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const val = d.toISOString().substring(0, 7);
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+      if (i === 0) opt.selected = true;
+      monthFilter.appendChild(opt);
+    }
+
+    async function loadAttendance() {
+      const month = monthFilter.value;
+      try {
+        const res = await apiRequest(`/api/attendance?month=${month}`);
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        const s = data.summary;
+        document.getElementById('presentCount').textContent = s.present || 0;
+        document.getElementById('absentCount').textContent = s.absent || 0;
+        document.getElementById('leaveCount').textContent = s.on_leave || 0;
+        document.getElementById('attendancePct').textContent = `${s.percentage}%`;
+
+        const bar = document.getElementById('progressBar');
+        bar.style.width = `${s.percentage}%`;
+        bar.style.background = s.percentage >= 75
+          ? 'linear-gradient(90deg, #2ecc71, #27ae60)'
+          : s.percentage >= 50
+          ? 'linear-gradient(90deg, #f39c12, #e67e22)'
+          : 'linear-gradient(90deg, #e74c3c, #c0392b)';
+
+        document.getElementById('progressText').textContent =
+          `${s.present + (s.late || 0)} out of ${s.total_days} days present (${s.percentage}%)`;
+
+        const tbody = document.getElementById('attendanceTable');
+        if (data.records.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="icon">📅</div><p>No attendance records for this month</p></div></td></tr>';
+          return;
+        }
+
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        tbody.innerHTML = data.records.map(r => {
+          const d = new Date(r.date);
+          const badgeClass = {
+            present: 'badge-success',
+            absent: 'badge-danger',
+            leave: 'badge-warning',
+            late: 'badge-info'
+          }[r.status] || 'badge-secondary';
+
+          return `
+            <tr>
+              <td>${formatDate(r.date)}</td>
+              <td style="color:var(--text-muted)">${days[d.getDay()]}</td>
+              <td><span class="badge ${badgeClass}">${r.status}</span></td>
+              <td style="color:var(--text-muted)">${r.remarks || '—'}</td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadLeaves() {
+      try {
+        const res = await apiRequest('/api/attendance/leave');
+        const data = await res.json();
+        const tbody = document.getElementById('leaveTable');
+
+        if (!data.success || data.leaves.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">✈️</div><p>No leave applications yet</p></div></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.leaves.map(l => {
+          const badgeClass = { pending: 'badge-warning', approved: 'badge-success', rejected: 'badge-danger' }[l.status];
+          return `
+            <tr>
+              <td>${formatDate(l.from_date)}</td>
+              <td>${formatDate(l.to_date)}</td>
+              <td>${l.reason}</td>
+              <td><span class="badge ${badgeClass}">${l.status}</span></td>
+              <td style="color:var(--text-muted)">${formatDate(l.applied_at)}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    async function submitLeave() {
+      const from_date = document.getElementById('leaveFrom').value;
+      const to_date = document.getElementById('leaveTo').value;
+      const reason = document.getElementById('leaveReason').value;
+      const alertEl = document.getElementById('leaveAlert');
+
+      if (!from_date || !to_date || !reason) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Please fill all fields.';
+        return;
+      }
+
+      try {
+        const res = await apiRequest('/api/attendance/leave', {
+          method: 'POST',
+          body: JSON.stringify({ from_date, to_date, reason })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alertEl.className = 'alert show alert-success';
+          alertEl.textContent = '✅ Leave application submitted!';
+          setTimeout(() => {
+            document.getElementById('leaveModal').classList.remove('show');
+            alertEl.classList.remove('show');
+            loadLeaves();
+          }, 1500);
+        } else {
+          alertEl.className = 'alert show alert-error';
+          alertEl.textContent = data.error;
+        }
+      } catch (e) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Failed to submit. Try again.';
+      }
+    }
+
+    // Set min date for leave application
+    document.getElementById('leaveFrom').min = new Date().toISOString().substring(0, 10);
+    document.getElementById('leaveTo').min = new Date().toISOString().substring(0, 10);
+
+    loadAttendance();
+    loadLeaves();
+
+    // Auto scroll to leave section if hash
+    if (window.location.hash === '#leave') {
+      setTimeout(() => document.getElementById('leave').scrollIntoView({ behavior: 'smooth' }), 500);
+    }
+  </script>
+</body>
+</html>
