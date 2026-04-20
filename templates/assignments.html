@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignments – SoftSkills Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+
+  <div class="portal-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo"><h2>∞ SOFTSKILLS</h2><span>ENGINEERING</span></div>
+      <div class="student-info-sidebar">
+        <div class="student-avatar" id="sidebarAvatar">S</div>
+        <div class="student-name" id="sidebarName">—</div>
+        <div class="student-id-badge" id="sidebarId">—</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+        <a href="attendance.html" class="nav-item"><span class="icon">📅</span> Attendance & Leave</a>
+        <a href="quiz.html" class="nav-item"><span class="icon">📝</span> Quiz Results</a>
+        <a href="assignments.html" class="nav-item active"><span class="icon">📚</span> Assignments</a>
+        <a href="fees.html" class="nav-item"><span class="icon">💰</span> Fee Management</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>📚 Assignments</h1>
+        <p>Submit and track your course assignments</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info"><h4 id="totalAsg">0</h4><p>Total Assignments</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info"><h4 id="submittedAsg">0</h4><p>Submitted</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info"><h4 id="pendingAsg">0</h4><p>Pending</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">⚠️</div>
+          <div class="stat-info"><h4 id="overdueAsg">0</h4><p>Overdue</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>All Assignments</h3></div>
+        <div id="asgList">
+          <div class="loading"><div class="spinner"></div> Loading assignments...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SUBMIT MODAL -->
+  <div class="modal-overlay" id="asgModal">
+    <div class="modal">
+      <h3 id="asgModalTitle">Submit Assignment</h3>
+      <div id="asgAlert" class="alert"></div>
+      <div id="asgDescription" style="background:var(--bg-dark); border-radius:8px; padding:12px; margin-bottom:15px; font-size:13px; color:var(--text-muted);"></div>
+      <div class="form-group">
+        <label>Your Answer / Solution</label>
+        <textarea id="asgSubmission" rows="6" placeholder="Write your assignment answer here..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('asgModal').classList.remove('show')">Cancel</button>
+        <button class="btn-primary" style="width:auto; padding:10px 24px;" onclick="submitAssignment()">Submit Assignment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const student = getStudent();
+    document.getElementById('sidebarAvatar').textContent = student.name?.charAt(0) || 'S';
+    document.getElementById('sidebarName').textContent = student.name;
+    document.getElementById('sidebarId').textContent = student.student_id;
+
+    let activeAsgId = null;
+
+    async function loadAssignments() {
+      try {
+        const res = await apiRequest('/api/assignments');
+        const data = await res.json();
+
+        document.getElementById('totalAsg').textContent = data.stats.total;
+        document.getElementById('submittedAsg').textContent = data.stats.submitted;
+        document.getElementById('pendingAsg').textContent = data.stats.pending;
+        document.getElementById('overdueAsg').textContent = data.stats.overdue;
+
+        const container = document.getElementById('asgList');
+
+        if (data.assignments.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>No assignments available yet</p></div>';
+          return;
+        }
+
+        const today = new Date().toISOString().substring(0, 10);
+
+        container.innerHTML = data.assignments.map(a => {
+          const isOverdue = !a.submission_status && a.due_date && a.due_date < today;
+          const isSubmitted = !!a.submission_status;
+
+          let statusBadge = '';
+          if (isSubmitted) {
+            const badgeMap = {
+              submitted: 'badge-success',
+              graded: 'badge-info',
+              late: 'badge-warning',
+              pending: 'badge-secondary'
+            };
+            statusBadge = `<span class="badge ${badgeMap[a.submission_status] || 'badge-secondary'}">${a.submission_status}</span>`;
+          } else if (isOverdue) {
+            statusBadge = '<span class="badge badge-danger">Overdue</span>';
+          } else {
+            statusBadge = '<span class="badge badge-warning">Pending</span>';
+          }
+
+          return `
+            <div style="padding:20px; border-bottom:1px solid var(--border);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                <div style="flex:1; min-width:200px;">
+                  <h4 style="font-size:15px; font-weight:600; margin-bottom:6px;">${a.title}</h4>
+                  ${a.description ? `<p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${a.description}</p>` : ''}
+                  <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                    <span style="font-size:12px; color:var(--text-muted);">📊 Total Marks: ${a.total_marks}</span>
+                    ${a.due_date ? `<span style="font-size:12px; color:${isOverdue ? 'var(--danger)' : 'var(--text-muted)'};">📅 Due: ${formatDate(a.due_date)}</span>` : ''}
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  ${statusBadge}
+                  ${isSubmitted
+                    ? `<span style="font-size:12px; color:var(--text-muted);">Submitted: ${formatDate(a.submitted_at)}</span>
+                       ${a.obtained_marks !== null ? `<span class="badge badge-info">Marks: ${a.obtained_marks}/${a.total_marks}</span>` : ''}`
+                    : `<button class="btn-primary" style="width:auto; padding:8px 16px;"
+                         onclick="openAsgModal(${a.id}, '${a.title.replace(/'/g, "\\'")}', '${a.description || ''}')">
+                         ${isOverdue ? '⚠️ Submit Late' : '📤 Submit'}
+                       </button>`
+                  }
+                </div>
+              </div>
+              ${a.submission_text ? `
+                <div style="margin-top:12px; background:var(--bg-dark); border-radius:8px; padding:12px;">
+                  <p style="font-size:11px; color:var(--text-muted); margin-bottom:5px;">YOUR SUBMISSION</p>
+                  <p style="font-size:13px;">${a.submission_text}</p>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openAsgModal(id, title, description) {
+      activeAsgId = id;
+      document.getElementById('asgModalTitle').textContent = `Submit: ${title}`;
+      document.getElementById('asgDescription').textContent = description || 'No description provided.';
+      document.getElementById('asgSubmission').value = '';
+      document.getElementById('asgAlert').classList.remove('show');
+      document.getElementById('asgModal').classList.add('show');
+    }
+
+    async function submitAssignment() {
+      const text = document.getElementById('asgSubmission').value.trim();
+      const alertEl = document.getElementById('asgAlert');
+
+      if (!text) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Please write your answer before submitting.';
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/assignments/${activeAsgId}/submit`, {
+          method: 'POST',
+          body: JSON.stringify({ submission_text: text })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alertEl.className = 'alert show alert-success';
+          alertEl.textContent = `✅ ${data.message}`;
+          setTimeout(() => {
+            document.getElementById('asgModal').classList.remove('show');
+            loadAssignments();
+          }, 1500);
+        } else {
+          alertEl.className = 'alert show alert-error';
+          alertEl.textContent = data.error;
+        }
+      } catch (e) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Submission failed.';
+      }
+    }
+
+    loadAssignments();
+  </script>
+</body>
+</html>
