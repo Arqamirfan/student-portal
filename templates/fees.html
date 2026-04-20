@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fee Management – SoftSkills Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+
+  <div class="portal-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo"><h2>∞ SOFTSKILLS</h2><span>ENGINEERING</span></div>
+      <div class="student-info-sidebar">
+        <div class="student-avatar" id="sidebarAvatar">S</div>
+        <div class="student-name" id="sidebarName">—</div>
+        <div class="student-id-badge" id="sidebarId">—</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+        <a href="attendance.html" class="nav-item"><span class="icon">📅</span> Attendance & Leave</a>
+        <a href="quiz.html" class="nav-item"><span class="icon">📝</span> Quiz Results</a>
+        <a href="assignments.html" class="nav-item"><span class="icon">📚</span> Assignments</a>
+        <a href="fees.html" class="nav-item active"><span class="icon">💰</span> Fee Management</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>💰 Fee Management</h1>
+        <p>Track your tuition fee payments and history</p>
+      </div>
+
+      <!-- FEE SUMMARY -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">💼</div>
+          <div class="stat-info"><h4 id="totalFee">—</h4><p>Total Course Fee</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info"><h4 id="paidFee">—</h4><p>Total Paid</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">⏳</div>
+          <div class="stat-info"><h4 id="unpaidFee">—</h4><p>Remaining Balance</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⚠️</div>
+          <div class="stat-info"><h4 id="overdueFee">0</h4><p>Overdue Months</p></div>
+        </div>
+      </div>
+
+      <!-- PAYMENT PROGRESS -->
+      <div class="card">
+        <div class="card-header"><h3>Payment Progress</h3></div>
+        <div class="progress-bar-container" style="margin-bottom:10px;">
+          <div class="progress-bar" id="feeProgressBar" style="width:0%; background:linear-gradient(90deg,#2ecc71,#27ae60)"></div>
+        </div>
+        <p id="feeProgressText" style="font-size:12px; color:var(--text-muted); text-align:center;">Loading...</p>
+      </div>
+
+      <!-- FEE TABLE -->
+      <div class="card">
+        <div class="card-header"><h3>Monthly Fee Breakdown</h3></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Paid Date</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="feeTable">
+              <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal-overlay" id="payModal">
+    <div class="modal">
+      <h3>💳 Record Payment</h3>
+      <div id="payAlert" class="alert"></div>
+      <p style="margin-bottom:15px; font-size:14px;">
+        Month: <strong id="payMonth">—</strong> &nbsp;|&nbsp; Amount: <strong id="payAmount">—</strong>
+      </p>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select id="payMethod">
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="JazzCash">JazzCash</option>
+          <option value="EasyPaisa">EasyPaisa</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Transaction ID / Receipt No (optional)</label>
+        <input type="text" id="payTransaction" placeholder="e.g. TXN-123456">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('payModal').classList.remove('show')">Cancel</button>
+        <button class="btn-primary" style="width:auto; padding:10px 24px;" onclick="confirmPayment()">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const student = getStudent();
+    document.getElementById('sidebarAvatar').textContent = student.name?.charAt(0) || 'S';
+    document.getElementById('sidebarName').textContent = student.name;
+    document.getElementById('sidebarId').textContent = student.student_id;
+
+    let activeFeeId = null;
+
+    async function loadFees() {
+      try {
+        const res = await apiRequest('/api/fees');
+        const data = await res.json();
+
+        const s = data.summary;
+        document.getElementById('totalFee').textContent = formatCurrency(s.total_fee);
+        document.getElementById('paidFee').textContent = formatCurrency(s.paid);
+        document.getElementById('unpaidFee').textContent = formatCurrency(s.unpaid);
+        document.getElementById('overdueFee').textContent = s.overdue;
+
+        const pct = s.total_fee > 0 ? Math.round((s.paid / s.total_fee) * 100) : 0;
+        document.getElementById('feeProgressBar').style.width = `${pct}%`;
+        document.getElementById('feeProgressText').textContent =
+          `${formatCurrency(s.paid)} paid out of ${formatCurrency(s.total_fee)} (${pct}%)`;
+
+        const today = new Date().toISOString().substring(0, 10);
+        const tbody = document.getElementById('feeTable');
+
+        if (data.fees.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">💰</div><p>No fee records found</p></div></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.fees.map(f => {
+          const isOverdue = f.status === 'unpaid' && f.due_date && f.due_date < today;
+          const badgeClass = {
+            paid: 'badge-success',
+            unpaid: isOverdue ? 'badge-danger' : 'badge-warning',
+            partial: 'badge-info',
+            waived: 'badge-secondary'
+          }[f.status];
+
+          return `
+            <tr style="${isOverdue ? 'background:rgba(231,76,60,0.05)' : ''}">
+              <td><strong>${f.month}</strong></td>
+              <td>${formatCurrency(f.amount)}</td>
+              <td style="color:${isOverdue ? 'var(--danger)' : 'var(--text-muted)'}">
+                ${formatDate(f.due_date)}
+                ${isOverdue ? ' ⚠️' : ''}
+              </td>
+              <td style="color:var(--text-muted)">${f.paid_date ? formatDate(f.paid_date) : '—'}</td>
+              <td style="color:var(--text-muted)">${f.payment_method || '—'}</td>
+              <td><span class="badge ${badgeClass}">${f.status}${isOverdue ? ' (overdue)' : ''}</span></td>
+              <td>
+                ${f.status === 'unpaid'
+                  ? `<button class="btn-success" onclick="openPayModal(${f.id}, '${f.month}', ${f.amount})">Pay Now</button>`
+                  : '<span style="color:var(--text-muted); font-size:13px;">✓ Done</span>'
+                }
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openPayModal(id, month, amount) {
+      activeFeeId = id;
+      document.getElementById('payMonth').textContent = month;
+      document.getElementById('payAmount').textContent = formatCurrency(amount);
+      document.getElementById('payTransaction').value = '';
+      document.getElementById('payAlert').classList.remove('show');
+      document.getElementById('payModal').classList.add('show');
+    }
+
+    async function confirmPayment() {
+      const alertEl = document.getElementById('payAlert');
+      try {
+        const res = await apiRequest(`/api/fees/${activeFeeId}/pay`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            payment_method: document.getElementById('payMethod').value,
+            transaction_id: document.getElementById('payTransaction').value || 'N/A'
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alertEl.className = 'alert show alert-success';
+          alertEl.textContent = '✅ Payment recorded successfully!';
+          setTimeout(() => {
+            document.getElementById('payModal').classList.remove('show');
+            loadFees();
+          }, 1500);
+        } else {
+          alertEl.className = 'alert show alert-error';
+          alertEl.textContent = data.error;
+        }
+      } catch (e) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Payment failed. Try again.';
+      }
+    }
+
+    loadFees();
+  </script>
+</body>
+</html>
