@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel – SoftSkills Engineering</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-nav-section { padding: 10px 0 0; }
+  </style>
+</head>
+<body>
+  <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+  <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+
+  <div class="portal-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <img src="images/logo.png" alt="Logo" onerror="this.style.display='none'">
+        <div class="sidebar-logo-text">
+          <h2>SOFTSKILLS</h2>
+          <span>ENGINEERING</span>
+        </div>
+      </div>
+
+      <div class="student-info-sidebar">
+        <div class="student-avatar" style="font-size:16px;">👑</div>
+        <div class="student-name" id="adminName">Admin</div>
+        <div class="student-id-badge">Administrator</div>
+        <div class="status-badge status-certified" style="margin-top:5px;">ADMIN</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Main</div>
+        <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+          <span class="icon">📊</span> Dashboard
+        </a>
+
+        <div class="sidebar-section-label">Students</div>
+        <a href="#" class="nav-item" onclick="showSection('students')">
+          <span class="icon">👥</span> All Students
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('attendance')">
+          <span class="icon">📅</span> Attendance
+          <span class="nav-badge" id="attendanceBadge" style="display:none">!</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('leaves')">
+          <span class="icon">✈️</span> Leave Requests
+          <span class="nav-badge" id="leaveBadge">0</span>
+        </a>
+
+        <div class="sidebar-section-label">Academics</div>
+        <a href="#" class="nav-item" onclick="showSection('quizzes')">
+          <span class="icon">📝</span> Quizzes
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('assignments')">
+          <span class="icon">📚</span> Assignments
+          <span class="nav-badge" id="asgBadge">0</span>
+        </a>
+
+        <div class="sidebar-section-label">Finance</div>
+        <a href="#" class="nav-item" onclick="showSection('fees')">
+          <span class="icon">💰</span> Fee Management
+        </a>
+
+        <div class="sidebar-section-label">Settings</div>
+        <a href="#" class="nav-item" onclick="showSection('courses')">
+          <span class="icon">🎓</span> Courses
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('notify')">
+          <span class="icon">🔔</span> Notifications
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-secondary" style="width:100%; font-size:12px;" onclick="adminLogout()">
+          🚪 Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <div>
+            <h2 id="topbarTitle">Dashboard</h2>
+            <p id="topbarSub">SoftSkills Engineering Admin Panel</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearch" placeholder="Search students..." oninput="handleGlobalSearch(this.value)">
+          </div>
+          <div class="topbar-icon-btn" onclick="showSection('notify')" title="Send Notification">
+            🔔
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;">
+            <span style="font-size:18px;">👑</span>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--text);" id="topbarAdmin">Admin</div>
+              <div style="font-size:10px; color:var(--text-muted);">Administrator</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT SECTIONS -->
+      <div class="content-area">
+
+        <!-- ===== DASHBOARD ===== -->
+        <div id="section-dashboard">
+          <div class="page-header">
+            <h1>📊 Dashboard Overview</h1>
+            <p>Real-time statistics for SoftSkills Engineering</p>
+          </div>
+
+          <div class="stats-grid" id="dashStats">
+            <div class="loading"><div class="spinner"></div> Loading stats...</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px; flex-wrap:wrap;">
+            <div class="card" style="min-width:280px;">
+              <div class="card-header"><h3>👥 Recent Enrollments</h3></div>
+              <div id="recentStudentsList">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+            </div>
+            <div class="card" style="min-width:280px;">
+              <div class="card-header">
+                <h3>📅 Today's Attendance</h3>
+                <button class="btn-primary" style="width:auto;padding:8px 16px;font-size:12px;" onclick="showSection('attendance')">Mark Attendance</button>
+              </div>
+              <div id="todayAttendanceSummary">
+                <div class="loading"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STUDENTS ===== -->
+        <div id="section-students" style="display:none;">
+          <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><h1>👥 Students Management</h1><p>Manage all enrolled students</p></div>
+            <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openAddStudentModal()">+ Add Student</button>
+          </div>
+
+          <div class="card">
+            <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+              <h3>All Students</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <input type="text" id="studentSearch" placeholder="Search name/email/ID..." class="filter-select" style="width:200px;" oninput="filterStudents()">
+                <select class="filter-select" id="statusFilter" onchange="filterStudents()">
+                  <option value="">All Status</option>
+                  <option>enrolled</option>
+                  <option>certified</option>
+                  <option>dropout</option>
+                  <option>suspended</option>
+                </select>
+                <select class="filter-select" id="courseFilter" onchange="filterStudents()">
+                  <option value="">All Courses</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Enrolled</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="studentsTable">
+                  <tr><td colspan="6"><div class="loading"><div class="spinner"></div> Loading...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== ATTENDANCE ===== -->
+        <div id="section-attendance" style="display:none;">
+          <div class="page-header">
+            <h1>📅 Attendance Management</h1>
+            <p>Mark and manage daily attendance</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <h3>Mark Attendance</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input type="date" id="attendanceDate" class="filter-select" value="">
+                <select class="filter-select" id="attCourseFilter">
+                  <option value="">All Courses</option>
+                </select>
+                <button class="btn-primary" style="width:auto;padding:9px 16px;font-size:12px;" onclick="loadAttendanceAdmin()">Load</button>
+                <button class="btn-success" onclick="bulkMarkAll('present')">✅ All Present</button>
+              </div>
+            </div>
+
+            <div id="attendanceMarkArea">
+              <div class="empty-state"><div class="icon">📅</div><p>Select date and click Load</p></div>
+            </div>
+
+            <div id="attendanceSaveBar" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end;">
+              <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveAttendance()">💾 Save Attendance</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Attendance Records</h3></div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Student</th><th>ID</th><th>Course</th><th>Date</th><th>Status</th><th>Remarks</th></tr>
+                </thead>
+                <tbody id="attRecordsTable">
+                  <tr><td colspan="6"><div class="empty-state"><div class="icon">📅</div><p>Load attendance to view records</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== LEAVES ===== -->
+        <div id="section-leaves" style="display:none;">
+          <div class="page-header"><h1>✈️ Leave Requests</h1><p>Approve or reject student leave applications</p></div>
+
+          <div class="card">
+            <div class="card-header"><h3>All Leave Applications</h3></div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Student</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Applied</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="leavesTable">
+                  <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== QUIZZES ===== -->
+        <div id="section-quizzes" style="display:none;">
+          <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><h1>📝 Quiz Management</h1><p>Create quizzes and manage student results</p></div>
+            <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openQuizModal()">+ Add Quiz</button>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>All Quizzes</h3></div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Quiz Title</th><th>Course</th><th>Total Marks</th><th>Date</th><th>Attempts</th><th>Avg Score</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="quizzesTable">
+                  <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== ASSIGNMENTS ===== -->
+        <div id="section-assignments" style="display:none;">
+          <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><h1>📚 Assignment Management</h1><p>Create assignments and grade submissions</p></div>
+            <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openAsgModal()">+ Add Assignment</button>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>All Assignments</h3></div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Title</th><th>Course</th><th>Due Date</th><th>Total Marks</th><th>Submissions</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="assignmentsTable">
+                  <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== FEES ===== -->
+        <div id="section-fees" style="display:none;">
+          <div class="page-header"><h1>💰 Fee Management</h1><p>Track and manage student fee payments</p></div>
+
+          <div class="stats-grid" id="feeStats" style="grid-template-columns:repeat(4,1fr);">
+          </div>
+
+          <div class="card">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <h3>Fee Records</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <select class="filter-select" id="feeStatusFilter" onchange="loadFees()">
+                  <option value="">All</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Student</th><th>ID</th><th>Month</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="feesTable">
+                  <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== COURSES ===== -->
+        <div id="section-courses" style="display:none;">
+          <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div><h1>🎓 Course Management</h1><p>Manage all available courses</p></div>
+            <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openCourseModal()">+ Add Course</button>
+          </div>
+
+          <div class="card">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Course Name</th><th>Category</th><th>Duration</th><th>Total Fee</th><th>Students</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="coursesTable">
+                  <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== NOTIFICATIONS ===== -->
+        <div id="section-notify" style="display:none;">
+          <div class="page-header"><h1>🔔 Send Notifications</h1><p>Communicate with students</p></div>
+
+          <div class="card">
+            <div class="card-header"><h3>Send Notification</h3></div>
+            <div class="form-grid-2">
+              <div class="form-group full">
+                <label>Notification Title</label>
+                <input type="text" id="notifTitle" placeholder="e.g. Fee Reminder, Exam Schedule...">
+              </div>
+              <div class="form-group full">
+                <label>Message</label>
+                <textarea id="notifMessage" rows="4" placeholder="Write your message here..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Send To</label>
+                <select id="notifTarget">
+                  <option value="all">All Students</option>
+                  <option value="select">Select Specific</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary" style="width:auto;padding:12px 28px;" onclick="sendNotification()">
+              🔔 Send Notification
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Add/Edit Student -->
+  <div class="modal-overlay" id="studentModal">
+    <div class="modal modal-lg">
+      <h3 id="studentModalTitle">➕ Add New Student</h3>
+      <div id="studentAlert" class="alert"></div>
+      <div class="form-grid-2">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="sName" placeholder="Student full name"></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="sEmail" placeholder="email@example.com"></div>
+        <div class="form-group"><label>Password *</label><input type="password" id="sPassword" placeholder="Min 6 chars" minlength="6"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="sPhone" placeholder="+92 3001234567"></div>
+        <div class="form-group"><label>CNIC</label><input type="text" id="sCnic" placeholder="xxxxx-xxxxxxx-x"></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="sStatus">
+            <option value="enrolled">Enrolled</option>
+            <option value="certified">Certified</option>
+            <option value="dropout">Dropout</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Course *</label>
+          <select id="sCourse"><option value="">Select course...</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('studentModal')">Cancel</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveStudent()">💾 Save Student</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Detail View -->
+  <div class="modal-overlay" id="studentDetailModal">
+    <div class="modal" style="max-width:650px;">
+      <h3>👤 Student Details</h3>
+      <div id="studentDetailContent">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('studentDetailModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Quiz -->
+  <div class="modal-overlay" id="quizModal">
+    <div class="modal">
+      <h3 id="quizModalTitle">➕ Add Quiz</h3>
+      <div id="quizAlert" class="alert"></div>
+      <div class="form-group"><label>Quiz Title *</label><input type="text" id="qTitle" placeholder="e.g. Week 1 – HTML Basics"></div>
+      <div class="form-group"><label>Course *</label><select id="qCourse"><option value="">Select...</option></select></div>
+      <div class="form-grid-2">
+        <div class="form-group"><label>Total Marks</label><input type="number" id="qMarks" value="100" min="1"></div>
+        <div class="form-group"><label>Quiz Date</label><input type="date" id="qDate"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('quizModal')">Cancel</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveQuiz()">💾 Save Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade Quiz -->
+  <div class="modal-overlay" id="gradeQuizModal">
+    <div class="modal">
+      <h3>📝 Enter Student Grade</h3>
+      <div id="gradeAlert" class="alert"></div>
+      <div class="form-group"><label>Student</label><select id="gradeStudent"><option value="">Select student...</option></select></div>
+      <div class="form-group"><label>Marks Obtained (out of <span id="gradeMax">100</span>)</label><input type="number" id="gradeMarks" min="0"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('gradeQuizModal')">Cancel</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveGrade()">✅ Save Grade</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Assignment -->
+  <div class="modal-overlay" id="asgModal">
+    <div class="modal">
+      <h3 id="asgModalTitle">➕ Add Assignment</h3>
+      <div id="asgAlert" class="alert"></div>
+      <div class="form-group"><label>Title *</label><input type="text" id="aTitle" placeholder="Assignment title"></div>
+      <div class="form-group"><label>Course *</label><select id="aCourse"><option value="">Select...</option></select></div>
+      <div class="form-group"><label>Description</label><textarea id="aDesc" rows="3" placeholder="Assignment details..."></textarea></div>
+      <div class="form-grid-2">
+        <div class="form-group"><label>Due Date</label><input type="date" id="aDue"></div>
+        <div class="form-group"><label>Total Marks</label><input type="number" id="aMarks" value="100"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('asgModal')">Cancel</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveAssignment()">💾 Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Submissions -->
+  <div class="modal-overlay" id="submissionsModal">
+    <div class="modal" style="max-width:650px;">
+      <h3>📋 Submissions</h3>
+      <div id="submissionsList">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('submissionsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Course -->
+  <div class="modal-overlay" id="courseModal">
+    <div class="modal">
+      <h3 id="courseModalTitle">➕ Add Course</h3>
+      <div id="courseAlert" class="alert"></div>
+      <div class="form-group"><label>Course Name *</label><input type="text" id="cName" placeholder="e.g. Python Development"></div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="cCategory">
+          <option>IT & Development</option>
+          <option>AI & Emerging Technologies</option>
+          <option>Marketing & Creative</option>
+          <option>Technical Skills</option>
+          <option>Health & Safety</option>
+          <option>Forex Trading</option>
+        </select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group"><label>Duration (months)</label><input type="number" id="cDuration" value="3" min="1"></div>
+        <div class="form-group"><label>Total Fee (PKR)</label><input type="number" id="cFee" placeholder="15000"></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="cDesc" rows="2" placeholder="Course description..."></textarea></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('courseModal')">Cancel</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="saveCourse()">💾 Save Course</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    // ===== GUARD =====
+    if (!localStorage.getItem('ss_admin_token')) window.location.href = 'admin-login.html';
+
+    const admin = getAdmin();
+    if (admin) {
+      document.getElementById('adminName').textContent = admin.name || 'Admin';
+      document.getElementById('topbarAdmin').textContent = admin.name || 'Admin';
+    }
+
+    let allStudents = [];
+    let allCourses = [];
+    let editingStudentId = null;
+    let editingQuizId = null;
+    let editingAsgId = null;
+    let editingCourseId = null;
+    let activeGradeQuizId = null;
+    let pendingAttendance = {};
+
+    // ===== SECTION NAVIGATION =====
+    const sectionTitles = {
+      dashboard: ['Dashboard Overview', 'Real-time statistics'],
+      students: ['Students Management', 'Manage all enrolled students'],
+      attendance: ['Attendance Management', 'Mark daily attendance'],
+      leaves: ['Leave Requests', 'Approve or reject leave applications'],
+      quizzes: ['Quiz Management', 'Create and manage quizzes'],
+      assignments: ['Assignment Management', 'Create and grade assignments'],
+      fees: ['Fee Management', 'Track and manage fee payments'],
+      courses: ['Course Management', 'Manage available courses'],
+      notify: ['Send Notifications', 'Communicate with students']
+    };
+
+    function showSection(name) {
+      document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+      document.getElementById(`section-${name}`).style.display = '';
+
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      event?.currentTarget?.classList.add('active');
+
+      const [title, sub] = sectionTitles[name] || ['', ''];
+      document.getElementById('topbarTitle').textContent = title;
+      document.getElementById('topbarSub').textContent = sub;
+
+      const loaders = {
+        dashboard: loadDashboard,
+        students: loadStudents,
+        attendance: () => { loadCoursesIntoFilter('attCourseFilter'); document.getElementById('attendanceDate').value = new Date().toISOString().substring(0, 10); loadAttendanceAdmin(); },
+        leaves: loadLeaves,
+        quizzes: loadQuizzes,
+        assignments: loadAssignments,
+        fees: loadFees,
+        courses: loadCourses,
+      };
+
+      loaders[name]?.();
+    }
+
+    // ===== LOAD COURSES GLOBALLY =====
+    async function loadAllCourses() {
+      const res = await apiRequest('/api/admin/courses');
+      const data = await res.json();
+      allCourses = data.courses || [];
+      return allCourses;
+    }
+
+    function populateCourseSelect(selectId, courses) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const groups = {};
+      courses.forEach(c => {
+        if (!groups[c.category]) groups[c.category] = [];
+        groups[c.category].push(c);
+      });
+      sel.innerHTML = '<option value="">Select course...</option>';
+      Object.entries(groups).forEach(([cat, list]) => {
+        const g = document.createElement('optgroup');
+        g.label = cat;
+        list.forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.id;
+          o.textContent = c.name;
+          g.appendChild(o);
+        });
+        sel.appendChild(g);
+      });
+    }
+
+    function loadCoursesIntoFilter(filterId) {
+      const sel = document.getElementById(filterId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">All Courses</option>';
+      allCourses.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.name;
+        sel.appendChild(o);
+      });
+    }
+
+    // ===== DASHBOARD =====
+    async function loadDashboard() {
+      try {
+        const res = await apiRequest('/api/admin/stats');
+        const data = await res.json();
+        const s = data.stats;
+
+        document.getElementById('leaveBadge').textContent = s.pendingLeaves;
+        document.getElementById('asgBadge').textContent = s.pendingAssignments;
+
+        document.getElementById('dashStats').innerHTML = `
+          <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><h4>${s.totalStudents}</h4><p>Total Students</p></div></div>
+          <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h4>${s.enrolled}</h4><p>Enrolled</p></div></div>
+          <div class="stat-card"><div class="stat-icon navy">🏆</div><div class="stat-info"><h4>${s.certified}</h4><p>Certified</p></div></div>
+          <div class="stat-card"><div class="stat-icon red">📊</div><div class="stat-info"><h4>${s.presentToday}</h4><p>Present Today</p></div></div>
+          <div class="stat-card"><div class="stat-icon yellow">✈️</div><div class="stat-info"><h4>${s.pendingLeaves}</h4><p>Pending Leaves</p></div></div>
+          <div class="stat-card"><div class="stat-icon green">💰</div><div class="stat-info"><h4>PKR ${Number(s.paidFees).toLocaleString()}</h4><p>Fees Collected</p></div></div>
+          <div class="stat-card"><div class="stat-icon red">⏳</div><div class="stat-info"><h4>PKR ${Number(s.unpaidFees).toLocaleString()}</h4><p>Fees Pending</p></div></div>
+          <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h4>${s.pendingAssignments}</h4><p>Pending Reviews</p></div></div>
+        `;
+
+        document.getElementById('recentStudentsList').innerHTML = data.recentStudents.length === 0
+          ? '<div class="empty-state"><div class="icon">👥</div><p>No students yet</p></div>'
+          : data.recentStudents.map(st => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand-red),#8b0000);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0;">${st.name.charAt(0)}</div>
+              <div style="flex:1;">
+                <p style="font-size:13px;font-weight:600;">${st.name}</p>
+                <p style="font-size:11px;color:var(--text-muted);">${st.student_id} • ${st.course_name || '—'}</p>
+              </div>
+              <span class="badge badge-${st.status === 'enrolled' ? 'info' : st.status === 'certified' ? 'success' : 'danger'}">${st.status}</span>
+            </div>
+          `).join('');
+
+        document.getElementById('todayAttendanceSummary').innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+            <div style="padding:15px;background:var(--bg-main);border-radius:8px;">
+              <p style="font-size:24px;font-weight:800;color:var(--success);">${s.presentToday}</p>
+              <p style="font-size:11px;color:var(--text-muted);">Present</p>
+            </div>
+            <div style="padding:15px;background:var(--bg-main);border-radius:8px;">
+              <p style="font-size:24px;font-weight:800;color:var(--danger);">${s.absentToday}</p>
+              <p style="font-size:11px;color:var(--text-muted);">Absent</p>
+            </div>
+            <div style="padding:15px;background:var(--bg-main);border-radius:8px;">
+              <p style="font-size:24px;font-weight:800;color:var(--text);">${s.totalStudents}</p>
+              <p style="font-size:11px;color:var(--text-muted);">Total</p>
+            </div>
+          </div>
+        `;
+      } catch (e) { console.error(e); }
+    }
+
+    // ===== STUDENTS =====
+    async function loadStudents() {
+      await loadAllCourses();
+      loadCoursesIntoFilter('courseFilter');
+      populateCourseSelect('sCourse', allCourses);
+      populateCourseSelect('courseFilter', allCourses);
+
+      const res = await apiRequest('/api/admin/students');
+      const data = await res.json();
+      allStudents = data.students || [];
+      renderStudentsTable(allStudents);
+    }
+
+    function renderStudentsTable(students) {
+      const tbody = document.getElementById('studentsTable');
+      if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">👥</div><p>No students found</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = students.map(s => `
+        <tr>
+          <td><strong style="color:var(--brand-red);">${s.student_id}</strong></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brand-red),#8b0000);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;">${s.name.charAt(0)}</div>
+              <div>
+                <p style="font-size:13px;font-weight:600;">${s.name}</p>
+                <p style="font-size:11px;color:var(--text-muted);">${s.email}</p>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:12px;">${s.course_name || '—'}</td>
+          <td><span class="status-badge status-${s.status}">${capitalize(s.status)}</span></td>
+          <td style="font-size:12px;color:var(--text-muted);">${formatDate(s.enrollment_date)}</td>
+          <td>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button class="btn-info btn-sm" onclick="viewStudent(${s.id})">👁 View</button>
+              <button class="btn-warning btn-sm" onclick="editStudent(${s.id})">✏️ Edit</button>
+              <button class="btn-danger btn-sm" onclick="deleteStudent(${s.id},'${s.name}')">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterStudents() {
+      const search = document.getElementById('studentSearch').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const course = document.getElementById('courseFilter').value;
+
+      const filtered = allStudents.filter(s => {
+        const matchSearch = !search || s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search) || s.student_id.toLowerCase().includes(search);
+        const matchStatus = !status || s.status === status;
+        const matchCourse = !course || s.course_id == course;
+        return matchSearch && matchStatus && matchCourse;
+      });
+
+      renderStudentsTable(filtered);
+    }
+
+    function handleGlobalSearch(val) {
+      if (!val) return;
+      showSection('students');
+      document.getElementById('studentSearch').value = val;
+      filterStudents();
+    }
+
+    function openAddStudentModal() {
+      editingStudentId = null;
+      document.getElementById('studentModalTitle').textContent = '➕ Add New Student';
+      document.getElementById('sPassword').required = true;
+      ['sName','sEmail','sPassword','sPhone','sCnic'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('sStatus').value = 'enrolled';
+      document.getElementById('studentAlert').classList.remove('show');
+      document.getElementById('studentModal').classList.add('show');
+    }
+
+    function editStudent(id) {
+      const s = allStudents.find(x => x.id === id);
+      if (!s) return;
+      editingStudentId = id;
+      document.getElementById('studentModalTitle').textContent = '✏️ Edit Student';
+      document.getElementById('sPassword').required = false;
+      document.getElementById('sName').value = s.name;
+      document.getElementById('sEmail').value = s.email;
+      document.getElementById('sPassword').value = '';
+      document.getElementById('sPhone').value = s.phone || '';
+      document.getElementById('sCnic').value = s.cnic || '';
+      document.getElementById('sStatus').value = s.status;
+      document.getElementById('sCourse').value = s.course_id || '';
+      document.getElementById('studentAlert').classList.remove('show');
+      document.getElementById('studentModal').classList.add('show');
+    }
+
+    async function saveStudent() {
+      const alertEl = document.getElementById('studentAlert');
+      const body = {
+        name: document.getElementById('sName').value,
+        email: document.getElementById('sEmail').value,
+        password: document.getElementById('sPassword').value,
+        phone: document.getElementById('sPhone').value,
+        cnic: document.getElementById('sCnic').value,
+        status: document.getElementById('sStatus').value,
+        course_id: document.getElementById('sCourse').value
+      };
+
+      if (!body.name || !body.email || !body.course_id) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Name, email and course are required.';
+        return;
+      }
+
+      try {
+        const url = editingStudentId ? `/api/admin/students/${editingStudentId}` : '/api/admin/students';
+        const method = editingStudentId ? 'PUT' : 'POST';
+        const res = await apiRequest(url, { method, body: JSON.stringify(body) });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alertEl.className = 'alert show alert-error';
+          alertEl.textContent = data.error;
+          return;
+        }
+
+        showToast(editingStudentId ? 'Student updated!' : `Student added! ID: ${data.student_id}`, 'success');
+        closeModal('studentModal');
+        loadStudents();
+      } catch (e) {
+        alertEl.className = 'alert show alert-error';
+        alertEl.textContent = 'Operation failed.';
+      }
+    }
+
+    async function viewStudent(id) {
+      document.getElementById('studentDetailContent').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      document.getElementById('studentDetailModal').classList.add('show');
+
+      const res = await apiRequest(`/api/admin/students/${id}`);
+      const data = await res.json();
+      const s = data.student;
+
+      const attSummary = { present: 0, absent: 0, leave: 0, late: 0 };
+      data.attendance.forEach(a => attSummary[a.status] = (attSummary[a.status] || 0) + 1);
+      const total = Object.values(attSummary).reduce((a, b) => a + b, 0);
+      const attPct = total > 0 ? Math.round(((attSummary.present + attSummary.late) / total) * 100) : 0;
+
+      const paidFees = data.fees.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
+      const totalFees = data.fees.reduce((s, f) => s + f.amount, 0);
+
+      document.getElementById('studentDetailContent').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div style="background:var(--bg-main);border-radius:8px;padding:14px;">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">STUDENT ID</p>
+            <p style="font-weight:700;color:var(--brand-red);">${s.student_id}</p>
+          </div>
+          <div style="background:var(--bg-main);border-radius:8px;padding:14px;">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">STATUS</p>
+            <span class="status-badge status-${s.status}">${capitalize(s.status)}</span>
+          </div>
+          <div style="background:var(--bg-main);border-radius:8px;padding:14px;">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">COURSE</p>
+            <p style="font-weight:600;font-size:13px;">${s.course_name || '—'}</p>
+          </div>
+          <div style="background:var(--bg-main);border-radius:8px;padding:14px;">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">PHONE</p>
+            <p style="font-weight:600;font-size:13px;">${s.phone || '—'}</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+          <div style="text-align:center;background:var(--bg-main);border-radius:8px;padding:12px;">
+            <p style="font-size:22px;font-weight:800;color:${attPct >= 75 ? 'var(--success)' : 'var(--danger)'};">${attPct}%</p>
+            <p style="font-size:11px;color:var(--text-muted);">Attendance</p>
+          </div>
+          <div style="text-align:center;background:var(--bg-main);border-radius:8px;padding:12px;">
+            <p style="font-size:22px;font-weight:800;color:var(--info);">${data.quizzes.length}</p>
+            <p style="font-size:11px;color:var(--text-muted);">Quizzes Done</p>
+          </div>
+          <div style="text-align:center;background:var(--bg-main);border-radius:8px;padding:12px;">
+            <p style="font-size:22px;font-weight:800;color:var(--warning);">PKR ${Number(paidFees).toLocaleString()}</p>
+            <p style="font-size:11px;color:var(--text-muted);">Fees Paid</p>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:var(--text-muted);">Fee Progress: PKR ${Number(paidFees).toLocaleString()} / PKR ${Number(totalFees).toLocaleString()}</p>
+        <div class="progress-bar-container" style="margin:8px 0 0;">
+          <div class="progress-bar" style="width:${totalFees > 0 ? Math.round(paidFees/totalFees*100) : 0}%"></div>
+        </div>
+      `;
+    }
+
+    async function deleteStudent(id, name) {
+      if (!confirm(`Delete student "${name}"? This action cannot be undone.`)) return;
+      await apiRequest(`/api/admin/students/${id}`, { method: 'DELETE' });
+      showToast('Student deleted.', 'error');
+      loadStudents();
+    }
+
+    // ===== ATTENDANCE =====
+    async function loadAttendanceAdmin() {
+      const date = document.getElementById('attendanceDate').value;
+      const course_id = document.getElementById('attCourseFilter').value;
+      if (!date) return;
+
+      const res = await apiRequest(`/api/admin/attendance?date=${date}&course_id=${course_id}`);
+      const data = await res.json();
+
+      pendingAttendance = {};
+      const area = document.getElementById('attendanceMarkArea');
+      const saveBar = document.getElementById('attendanceSaveBar');
+
+      // Combine already-marked and unmarked
+      const allStudentsForDay = [
+        ...data.records.map(r => ({ ...r, isMarked: true })),
+        ...data.unmarked.map(r => ({ ...r, status: 'present', isMarked: false }))
+      ];
+
+      if (allStudentsForDay.length === 0) {
+        area.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>No students found for selected filter</p></div>';
+        saveBar.style.display = 'none';
+        return;
+      }
+
+      // Initialize pending
+      allStudentsForDay.forEach(s => {
+        pendingAttendance[s.student_id || s.id] = {
+          student_id: s.student_id || s.id,
+          status: s.status || 'present',
+          remarks: s.remarks || ''
+        };
+      });
+
+      area.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>#</th><th>Student</th><th>Course</th><th>Status</th><th>Remarks</th></tr></thead>
+            <tbody>
+              ${allStudentsForDay.map((s, i) => `
+                <tr id="attRow-${s.student_id || s.id}">
+                  <td style="color:var(--text-muted);font-size:12px;">${i+1}</td>
+                  <td>
+                    <strong style="font-size:13px;">${s.student_name || s.name}</strong><br>
+                    <span style="font-size:11px;color:var(--text-muted);">${s.sid || ''}</span>
+                  </td>
+                  <td style="font-size:12px;color:var(--text-muted);">${s.course_name || '—'}</td>
+                  <td>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                      ${['present','absent','leave','late'].map(st => `
+                        <button onclick="setAttStatus(${s.student_id || s.id}, '${st}', this)"
+                          style="padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:${(s.status||'present')===st ? getAttColor(st) : 'transparent'};color:${(s.status||'present')===st ? 'white' : 'var(--text-muted)'};font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;"
+                          data-status="${st}">
+                          ${st.charAt(0).toUpperCase() + st.slice(1)}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </td>
+                  <td><input type="text" placeholder="Remarks..." value="${s.remarks||''}" style="background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;width:120px;" oninput="setAttRemarks(${s.student_id || s.id}, this.value)"></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      saveBar.style.display = 'flex';
+
+      // Load records in separate table
+      document.getElementById('attRecordsTable').innerHTML = data.records.length === 0
+        ? '<tr><td colspan="6"><div class="empty-state"><div class="icon">📅</div><p>No records for this date</p></div></td></tr>'
+        : data.records.map(r => `
+          <tr>
+            <td>${r.student_name}</td>
+            <td style="font-size:12px;color:var(--text-muted);">${r.sid}</td>
+            <td style="font-size:12px;">${r.course_name||'—'}</td>
+            <td style="font-size:12px;">${r.date}</td>
+            <td><span class="badge badge-${r.status === 'present' ? 'success' : r.status === 'absent' ? 'danger' : r.status === 'leave' ? 'warning' : 'info'}">${r.status}</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">${r.remarks||'—'}</td>
+          </tr>
+        `).join('');
+    }
+
+    function getAttColor(st) {
+      return { present: '#27ae60', absent: '#e74c3c', leave: '#f39c12', late: '#2980b9' }[st] || '#888';
+    }
+
+    function setAttStatus(sid, status, btn) {
+      if (pendingAttendance[sid]) pendingAttendance[sid].status = status;
+      else pendingAttendance[sid] = { student_id: sid, status, remarks: '' };
+
+      const row = document.getElementById(`attRow-${sid}`);
+      row.querySelectorAll('button[data-status]').forEach(b => {
+        const isSel = b.dataset.status === status;
+        b.style.background = isSel ? getAttColor(b.dataset.status) : 'transparent';
+        b.style.color = isSel ? 'white' : 'var(--text-muted)';
+      });
+    }
+
+    function setAttRemarks(sid, val) {
+      if (pendingAttendance[sid]) pendingAttendance[sid].remarks = val;
+    }
+
+    function bulkMarkAll(status) {
+      Object.keys(pendingAttendance).forEach(sid => {
+        pendingAttendance[sid].status = status;
+        const row = document.getElementById(`attRow-${sid}`);
+        if (row) {
+          row.querySelectorAll('button[data-status]').forEach(b => {
+            const isSel = b.dataset.status === status;
+            b.style.background = isSel ? getAttColor(b.dataset.status) : 'transparent';
+            b.style.color = isSel ? 'white' : 'var(--text-muted)';
+          });
+        }
+      });
+    }
+
+    async function saveAttendance() {
+      const date = document.getElementById('attendanceDate').value;
+      const records = Object.values(pendingAttendance);
+
+      const res = await apiRequest('/api/admin/attendance/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ date, records })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ ${records.length} attendance records saved!`, 'success');
+        loadAttendanceAdmin();
+      }
+    }
+
+    // ===== LEAVES =====
+    async function loadLeaves() {
+      const res = await apiRequest('/api/admin/leaves');
+      const data = await res.json();
+      const tbody = document.getElementById('leavesTable');
+
+      if (!data.leaves.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">✈️</div><p>No leave applications</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.leaves.map(l => {
+        const bc = { pending: 'warning', approved: 'success', rejected: 'danger' };
+        return `
+          <tr>
+            <td><strong>${l.student_name}</strong><br><span style="font-size:11px;color:var(--text-muted);">${l.sid}</span></td>
+            <td>${formatDate(l.from_date)}</td>
+            <td>${formatDate(l.to_date)}</td>
+            <td style="font-size:13px;">${l.reason}</td>
+            <td><span class="badge badge-${bc[l.status]}">${l.status}</span></td>
+            <td style="font-size:12px;color:var(--text-muted);">${formatDate(l.applied_at)}</td>
+            <td>
+              ${l.status === 'pending' ? `
+                <div style="display:flex;gap:5px;">
+                  <button class="btn-success btn-sm" onclick="updateLeave(${l.id},'approved')">✅</button>
+                  <button class="btn-danger btn-sm" onclick="updateLeave(${l.id},'rejected')">❌</button>
+                </div>
+              ` : `<span style="font-size:12px;color:var(--text-muted);">Reviewed</span>`}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updateLeave(id, status) {
+      await apiRequest(`/api/admin/leaves/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      showToast(`Leave ${status}!`, status === 'approved' ? 'success' : 'error');
+      loadLeaves();
+    }
+
+    // ===== QUIZZES =====
+    async function loadQuizzes() {
+      await loadAllCourses();
+      populateCourseSelect('qCourse', allCourses);
+
+      const res = await apiRequest('/api/admin/quizzes');
+      const data = await res.json();
+      const tbody = document.getElementById('quizzesTable');
+
+      if (!data.quizzes.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">📝</div><p>No quizzes yet</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.quizzes.map(q => `
+        <tr>
+          <td><strong>${q.title}</strong></td>
+          <td style="font-size:12px;">${q.course_name}</td>
+          <td>${q.total_marks}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${formatDate(q.quiz_date)}</td>
+          <td><span class="badge badge-info">${q.attempts}</span></td>
+          <td>${q.avg_score ? Math.round(q.avg_score) + '%' : '—'}</td>
+          <td>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button class="btn-info btn-sm" onclick="openGradeModal(${q.id}, ${q.total_marks})">📝 Grade</button>
+              <button class="btn-warning btn-sm" onclick="editQuiz(${q.id})">✏️</button>
+              <button class="btn-danger btn-sm" onclick="deleteQuiz(${q.id})">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openQuizModal(id = null) {
+      editingQuizId = id;
+      document.getElementById('quizModalTitle').textContent = id ? '✏️ Edit Quiz' : '➕ Add Quiz';
+      document.getElementById('quizAlert').classList.remove('show');
+      if (!id) { ['qTitle', 'qDate'].forEach(i => document.getElementById(i).value = ''); document.getElementById('qMarks').value = 100; }
+      document.getElementById('quizModal').classList.add('show');
+    }
+
+    async function saveQuiz() {
+      const body = { course_id: document.getElementById('qCourse').value, title: document.getElementById('qTitle').value, total_marks: document.getElementById('qMarks').value, quiz_date: document.getElementById('qDate').value };
+      const url = editingQuizId ? `/api/admin/quizzes/${editingQuizId}` : '/api/admin/quizzes';
+      const res = await apiRequest(url, { method: editingQuizId ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast('Quiz saved!'); closeModal('quizModal'); loadQuizzes(); }
+    }
+
+    function openGradeModal(quizId, maxMarks) {
+      activeGradeQuizId = quizId;
+      document.getElementById('gradeMax').textContent = maxMarks;
+      document.getElementById('gradeMarks').max = maxMarks;
+      document.getElementById('gradeMarks').value = '';
+      // Populate students
+      const sel = document.getElementById('gradeStudent');
+      sel.innerHTML = '<option value="">Select student...</option>';
+      allStudents.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = `${s.name} (${s.student_id})`;
+        sel.appendChild(o);
+      });
+      document.getElementById('gradeAlert').classList.remove('show');
+      document.getElementById('gradeQuizModal').classList.add('show');
+    }
+
+    async function saveGrade() {
+      const student_id = document.getElementById('gradeStudent').value;
+      const marks = document.getElementById('gradeMarks').value;
+      const alertEl = document.getElementById('gradeAlert');
+      if (!student_id || marks === '') { alertEl.className = 'alert show alert-error'; alertEl.textContent = 'Select student and enter marks.'; return; }
+      const res = await apiRequest(`/api/admin/quizzes/${activeGradeQuizId}/grade`, { method: 'POST', body: JSON.stringify({ student_id, obtained_marks: marks }) });
+      const data = await res.json();
+      if (data.success) { showToast(`Grade saved: ${data.grade}`); closeModal('gradeQuizModal'); loadQuizzes(); }
+    }
+
+    async function deleteQuiz(id) {
+      if (!confirm('Delete this quiz and all its results?')) return;
+      await apiRequest(`/api/admin/quizzes/${id}`, { method: 'DELETE' });
+      showToast('Quiz deleted.', 'error');
+      loadQuizzes();
+    }
+
+    // ===== ASSIGNMENTS =====
+    async function loadAssignments() {
+      await loadAllCourses();
+      populateCourseSelect('aCourse', allCourses);
+
+      const res = await apiRequest('/api/admin/assignments');
+      const data = await res.json();
+      const tbody = document.getElementById('assignmentsTable');
+
+      tbody.innerHTML = data.assignments.length === 0
+        ? '<tr><td colspan="6"><div class="empty-state"><div class="icon">📚</div><p>No assignments yet</p></div></td></tr>'
+        : data.assignments.map(a => `
+          <tr>
+            <td><strong>${a.title}</strong>${a.description ? `<br><span style="font-size:11px;color:var(--text-muted);">${a.description.substring(0,40)}...</span>` : ''}</td>
+            <td style="font-size:12px;">${a.course_name}</td>
+            <td style="font-size:12px;color:${a.due_date && a.due_date < new Date().toISOString().substring(0,10) ? 'var(--danger)' : 'var(--text-muted)'};">${formatDate(a.due_date)}</td>
+            <td>${a.total_marks}</td>
+            <td><span class="badge badge-info">${a.submissions}</span></td>
+            <td>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <button class="btn-info btn-sm" onclick="viewSubmissions(${a.id},'${a.title.replace(/'/g,"\\'")}')">📋 View</button>
+                <button class="btn-warning btn-sm" onclick="editAsg(${a.id})">✏️</button>
+                <button class="btn-danger btn-sm" onclick="deleteAsg(${a.id})">🗑</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function openAsgModal(id = null) {
+      editingAsgId = id;
+      document.getElementById('asgModalTitle').textContent = id ? '✏️ Edit Assignment' : '➕ Add Assignment';
+      document.getElementById('asgAlert').classList.remove('show');
+      if (!id) { ['aTitle','aDesc','aDue'].forEach(i => document.getElementById(i).value = ''); document.getElementById('aMarks').value = 100; }
+      document.getElementById('asgModal').classList.add('show');
+    }
+
+    async function saveAssignment() {
+      const body = { course_id: document.getElementById('aCourse').value, title: document.getElementById('aTitle').value, description: document.getElementById('aDesc').value, due_date: document.getElementById('aDue').value, total_marks: document.getElementById('aMarks').value };
+      const url = editingAsgId ? `/api/admin/assignments/${editingAsgId}` : '/api/admin/assignments';
+      const res = await apiRequest(url, { method: editingAsgId ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast('Assignment saved!'); closeModal('asgModal'); loadAssignments(); }
+    }
+
+    async function viewSubmissions(asgId, title) {
+      document.getElementById('submissionsModal').classList.add('show');
+      document.getElementById('submissionsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      const res = await apiRequest(`/api/admin/assignments/${asgId}/submissions`);
+      const data = await res.json();
+
+      if (!data.submissions.length) {
+        document.getElementById('submissionsList').innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No submissions yet</p></div>';
+        return;
+      }
+
+      document.getElementById('submissionsList').innerHTML = `
+        <h4 style="margin-bottom:15px;font-size:14px;color:var(--text-muted);">${title}</h4>
+        ${data.submissions.map(s => `
+          <div style="padding:14px;background:var(--bg-main);border-radius:8px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <strong style="font-size:13px;">${s.student_name}</strong>
+                <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">${s.sid}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="badge badge-${s.status === 'graded' ? 'success' : s.status === 'late' ? 'warning' : 'info'}">${s.status}</span>
+                <input type="number" placeholder="Marks" value="${s.obtained_marks || ''}" min="0"
+                  style="width:70px;padding:4px 8px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;"
+                  onchange="gradeSubmission(${s.id}, this.value)">
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);background:var(--bg-card);padding:10px;border-radius:6px;">${s.submission_text || '—'}</p>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Submitted: ${formatDate(s.submitted_at)}</p>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    async function gradeSubmission(subId, marks) {
+      await apiRequest(`/api/admin/assignments/submissions/${subId}/grade`, { method: 'PATCH', body: JSON.stringify({ obtained_marks: marks }) });
+      showToast('Marks saved!');
+    }
+
+    async function deleteAsg(id) {
+      if (!confirm('Delete this assignment?')) return;
+      await apiRequest(`/api/admin/assignments/${id}`, { method: 'DELETE' });
+      showToast('Deleted.', 'error');
+      loadAssignments();
+    }
+
+    // ===== FEES =====
+    async function loadFees() {
+      const status = document.getElementById('feeStatusFilter')?.value || '';
+      const res = await apiRequest(`/api/admin/fees?status=${status}`);
+      const data = await res.json();
+
+      const fees = data.fees;
+      const total = fees.reduce((s, f) => s + f.amount, 0);
+      const paid = fees.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
+      const unpaid = fees.filter(f => f.status === 'unpaid').reduce((s, f) => s + f.amount, 0);
+      const today = new Date().toISOString().substring(0, 10);
+      const overdue = fees.filter(f => f.status === 'unpaid' && f.due_date < today).length;
+
+      document.getElementById('feeStats').innerHTML = `
+        <div class="stat-card"><div class="stat-icon blue">💼</div><div class="stat-info"><h4>PKR ${Number(total).toLocaleString()}</h4><p>Total</p></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h4>PKR ${Number(paid).toLocaleString()}</h4><p>Collected</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">⏳</div><div class="stat-info"><h4>PKR ${Number(unpaid).toLocaleString()}</h4><p>Pending</p></div></div>
+        <div class="stat-card"><div class="stat-icon yellow">⚠️</div><div class="stat-info"><h4>${overdue}</h4><p>Overdue</p></div></div>
+      `;
+
+      const tbody = document.getElementById('feesTable');
+      tbody.innerHTML = fees.map(f => {
+        const isOverdue = f.status === 'unpaid' && f.due_date < today;
+        return `
+          <tr style="${isOverdue ? 'background:rgba(231,76,60,0.04)' : ''}">
+            <td><strong>${f.student_name}</strong></td>
+            <td style="font-size:11px;color:var(--text-muted);">${f.sid}</td>
+            <td>${f.month}</td>
+            <td>PKR ${Number(f.amount).toLocaleString()}</td>
+            <td style="color:${isOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${formatDate(f.due_date)}${isOverdue ? ' ⚠️' : ''}</td>
+            <td><span class="badge badge-${f.status === 'paid' ? 'success' : isOverdue ? 'danger' : 'warning'}">${f.status}</span></td>
+            <td>
+              ${f.status !== 'paid' ? `<button class="btn-success btn-sm" onclick="markFeePaid(${f.id})">✅ Mark Paid</button>` : `<span style="font-size:12px;color:var(--text-muted);">✓ Done</span>`}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function markFeePaid(id) {
+      await apiRequest(`/api/admin/fees/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'paid', payment_method: 'Cash' }) });
+      showToast('Fee marked as paid!');
+      loadFees();
+    }
+
+    // ===== COURSES =====
+    async function loadCourses() {
+      await loadAllCourses();
+      const tbody = document.getElementById('coursesTable');
+      tbody.innerHTML = allCourses.map(c => `
+        <tr>
+          <td><strong>${c.name}</strong></td>
+          <td><span class="badge badge-secondary" style="font-size:10px;">${c.category}</span></td>
+          <td>${c.duration_months} months</td>
+          <td>PKR ${Number(c.total_fee).toLocaleString()}</td>
+          <td><span class="badge badge-info">${c.student_count}</span></td>
+          <td>
+            <div style="display:flex;gap:5px;">
+              <button class="btn-warning btn-sm" onclick="editCourse(${c.id})">✏️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openCourseModal() {
+      editingCourseId = null;
+      document.getElementById('courseModalTitle').textContent = '➕ Add Course';
+      ['cName','cDesc'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('cDuration').value = 3;
+      document.getElementById('cFee').value = '';
+      document.getElementById('courseAlert').classList.remove('show');
+      document.getElementById('courseModal').classList.add('show');
+    }
+
+    function editCourse(id) {
+      const c = allCourses.find(x => x.id === id);
+      if (!c) return;
+      editingCourseId = id;
+      document.getElementById('courseModalTitle').textContent = '✏️ Edit Course';
+      document.getElementById('cName').value = c.name;
+      document.getElementById('cCategory').value = c.category;
+      document.getElementById('cDuration').value = c.duration_months;
+      document.getElementById('cFee').value = c.total_fee;
+      document.getElementById('cDesc').value = c.description || '';
+      document.getElementById('courseAlert').classList.remove('show');
+      document.getElementById('courseModal').classList.add('show');
+    }
+
+    async function saveCourse() {
+      const body = { name: document.getElementById('cName').value, category: document.getElementById('cCategory').value, duration_months: document.getElementById('cDuration').value, total_fee: document.getElementById('cFee').value, description: document.getElementById('cDesc').value };
+      const url = editingCourseId ? `/api/admin/courses/${editingCourseId}` : '/api/admin/courses';
+      const res = await apiRequest(url, { method: editingCourseId ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast('Course saved!'); closeModal('courseModal'); loadCourses(); }
+    }
+
+    // ===== NOTIFICATIONS =====
+    async function sendNotification() {
+      const title = document.getElementById('notifTitle').value;
+      const message = document.getElementById('notifMessage').value;
+      const target = document.getElementById('notifTarget').value;
+
+      if (!title || !message) { showToast('Title and message required.', 'error'); return; }
+
+      const body = { title, message, send_all: target === 'all' };
+      const res = await apiRequest('/api/admin/notify', { method: 'POST', body: JSON.stringify(body) });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(`✅ Sent to ${data.sent} students!`);
+        document.getElementById('notifTitle').value = '';
+        document.getElementById('notifMessage').value = '';
+      }
+    }
+
+    // ===== UTILS =====
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    function adminLogout() {
+      if (confirm('Logout from admin panel?')) {
+        localStorage.removeItem('ss_admin_token');
+        localStorage.removeItem('ss_admin');
+        window.location.href = 'admin-login.html';
+      }
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+    });
+
+    // ===== INIT =====
+    loadAllCourses();
+    loadDashboard();
+  </script>
+</body>
+</html>
